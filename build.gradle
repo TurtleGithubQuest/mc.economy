@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version "1.9.23"
+    id 'com.github.johnrengelman.shadow' version "7.1.2"
+}
+
+group = 'dev.turtle'
+version = '0.0.1'
+pluginName = "TurtleEconomy"
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "spigotmc-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven {
+        name = "jitpack"
+        url = "https://jitpack.io"
+    }
+}
+
+dependencies {
+    compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
+    compileOnly "com.github.TurtleGithubQuest:mc.turtlelib:0.0.1d"
+    compileOnly "com.typesafe:config:1.4.3"
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+processResources {
+    def props = [version: version, pluginName: pluginName]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+tasks {
+    var buildDirectoryPath = project.hasProperty("buildDirectory") ? project.property("buildDirectory") : "build/libs"
+    var buildDirectory = file(buildDirectoryPath)
+    jar {
+        destinationDirectory = file(buildDirectory)
+    }
+    shadowJar {
+        archiveFileName = "$pluginName-${version}.jar"
+        destinationDirectory = file(buildDirectory)
+    }
+}
