@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 class Currency(private val currencyName: String) {
-    private val items: HashMap<String, CurrencyItem> = hashMapOf()
+    val items: HashMap<String, CurrencyItem> = hashMapOf()
     val placeholderMap = mutableMapOf<String, String>()
     companion object {
         val nskCurrencyItem = NamespacedKey(turtle, "CurrencyItem")

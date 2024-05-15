@@ -5,7 +5,6 @@ import dev.turtle.economy.currency.Currency
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
 import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
 import org.bukkit.event.Listener
 
 class Economy: TurtlePlugin() {
