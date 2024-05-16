@@ -2,6 +2,7 @@ package dev.turtle.economy
 
 import dev.turtle.economy.command.turtleeconomy.TurtleEconomy
 import dev.turtle.economy.currency.Currency
+import dev.turtle.economy.database.Database
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
 import org.bukkit.Bukkit
@@ -11,11 +12,12 @@ class Economy: TurtlePlugin() {
     companion object {
         lateinit var cfg: Configuration
         lateinit var lang: Configuration
+        lateinit var database: Database
         val currencies = mutableMapOf<String, Currency>()
         val eventListeners = mutableListOf<Listener>()
         lateinit var turtle: TurtlePlugin
     }
-    override fun onEnable() {
+    override fun onStart() {
         turtle = this
         lang = ConfigLang()
         cfg = ConfigConfig()
@@ -37,7 +39,10 @@ class Economy: TurtlePlugin() {
                 plugin.messageFactory.newMessage(
                     "&7Loaded &e${currencies.size}&7 currencies."
                 ).enablePrefix().send()
-            }
+            }?: this@Economy.disable("&7Plugin &cdisabled&7: No currency configuration found.")
+            this.getSection("database")?.let {
+
+            }?: this@Economy.disable("&7Plugin &cdisabled&7: No database configuration found.")
         }
     }
     inner class ConfigLang: Configuration("lang", configFactory) {

@@ -25,9 +25,9 @@ repositories {
 }
 
 dependencies {
-    def tLibDir = findProperty("tLibDir")?: "S:\\mc_server\\plugins\\TurtleLib-${version}.jar"
+    def tLibDir = findProperty("tLibDir")?: files("S:\\mc_server\\plugins\\TurtleLib-${version}-fat.jar")
     def tLibIsLocal = findProperty("tLibLocal") ?: false
-    def tLibLocation = tLibIsLocal ? tLibDir : "com.github.TurtleGithubQuest:mc.turtlelib:0.0.2"
+    def tLibLocation = tLibIsLocal ? tLibDir : "com.github.TurtleGithubQuest:mc.turtlelib:0.0.3"
     if (project.findProperty("fat") ?: false) {
        implementation tLibLocation
     } else {
@@ -35,6 +35,7 @@ dependencies {
     }
     compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
     compileOnly "com.typesafe:config:1.4.3"
+    implementation "org.mariadb.jdbc:mariadb-java-client:2.1.2"
 }
 
 def targetJavaVersion = 17
