@@ -26,7 +26,7 @@ jobs:
       - run: chmod +x gradlew
 
       - name: Build jar
-        run: ./gradlew --no-daemon -q clean jar shadowJar
+        run: ./gradlew --no-daemon -q clean jar #todo: build jar && shadowJar
 
       - name: Get the version
         id: version
