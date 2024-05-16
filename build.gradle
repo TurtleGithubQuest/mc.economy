@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'dev.turtle'
-version = '0.0.2'
+version = '0.0.3'
 pluginName = "TurtleEconomy"
 
 repositories {
@@ -25,10 +25,15 @@ repositories {
 }
 
 dependencies {
+    def tLibDir = findProperty("tLibDir")?: "S:\\mc_server\\plugins\\TurtleLib-${version}.jar"
+    def tLibIsLocal = findProperty("tLibLocal") ?: false
+    def tLibLocation = tLibIsLocal ? tLibDir : "com.github.TurtleGithubQuest:mc.turtlelib:0.0.2"
+    if (project.findProperty("fat") ?: false) {
+       implementation tLibLocation
+    } else {
+       compileOnly tLibLocation
+    }
     compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
-    compileOnly "com.github.TurtleGithubQuest:mc.turtlelib:0.0.2"
-    //todo: fallback to local library
-    // implementation files("S:\\mc_server\\plugins\\TurtleLib-$version.jar")
     compileOnly "com.typesafe:config:1.4.3"
 }
 
@@ -44,7 +49,6 @@ java {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         options.release.set(targetJavaVersion)
     }
@@ -62,16 +66,22 @@ processResources {
 kotlin {
     jvmToolchain(17)
 }
-
+tasks.register('projectVersion') {
+    doLast {
+        println project.version
+    }
+}
 tasks {
-    var buildDirectoryPath = project.hasProperty("buildDirectory") ? project.property("buildDirectory") : "build/libs"
+    var buildDirectoryPath = project.findProperty("buildDirectory")?: "build/libs"
     var buildDirectory = file(buildDirectoryPath)
     jar {
         archiveFileName = "$pluginName-${version}.jar"
         destinationDirectory = file(buildDirectory)
     }
     shadowJar {
-        archiveFileName = "$pluginName-${version}.jar"
+        var shouldAppendFat = project.findProperty("fat") ?: false
+        var append = shouldAppendFat ? "-fat" : ""
+        archiveFileName = "$pluginName-${version}${append}.jar"
         destinationDirectory = file(buildDirectory)
     }
 }
