@@ -12,14 +12,16 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 class Currency(private val currencyName: String) {
+    val startBalance: Int
     val items: HashMap<String, CurrencyItem> = hashMapOf()
     val placeholderMap = mutableMapOf<String, String>()
     companion object {
         val nskCurrencyItem = NamespacedKey(turtle, "CurrencyItem")
     }
     init {
-        cfg.getSection("currency.$currencyName")?.let { currency ->
+        cfg.getSection("currency.$currencyName")!!.let { currency ->
             placeholderMap["SYMBOL"] = currency.getString("symbol")
+            startBalance = currency.getInt("balance.start")
             currency.getConfig("items")?.let {
                 itemsConfig ->
                  itemsConfig.root().entries.forEach { (itemName, _) ->
