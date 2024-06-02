@@ -1,18 +1,18 @@
 package dev.turtle.economy.database
 
+import dev.turtle.economy.Economy.Companion.currencies
 import dev.turtle.economy.Economy.Companion.turtle
 import dev.turtle.turtlelib.database.mysql.MySql
 import java.sql.ResultSet
-import java.sql.SQLIntegrityConstraintViolationException
 
 class TEcoDatabase(
     private val dbName: String,
     ip: String,
     port: String?,
-    sslMode: String): MySql(dbName, ip, port, sslMode, turtle
-) {
-    private lateinit var initBalanceStatement: java.sql.PreparedStatement
-    private lateinit var logBalanceStatement: java.sql.PreparedStatement
+    sslMode: String
+): MySql(dbName, ip, port, sslMode, turtle) {
+    lateinit var initBalanceStatement: java.sql.PreparedStatement
+    lateinit var logBalanceStatement: java.sql.PreparedStatement
     fun migrate() {
         turtle.messageFactory.newMessage("&7Preparing database..").enablePrefix().send()
         connection.autoCommit = false
@@ -40,73 +40,62 @@ class TEcoDatabase(
             statement.close()
         }
     }
-    fun initBalance(nickname: String, currency: String, balance: Int, uuid: String?=null): Boolean {
-        return try {
-            initBalanceStatement.setString(1, nickname)
-            initBalanceStatement.setString(2, uuid)
-            initBalanceStatement.setString(4, currency)
-            initBalanceStatement.setInt(3, balance)
-            initBalanceStatement.execute()
-            logBalanceStatement.setInt(4, balance)
-            logBalanceStatement.setString(3, "INIT")
-            logBalanceStatement.setString(1, nickname)
-            logBalanceStatement.setString(2, uuid)
-            logBalanceStatement.setString(5, currency)
-            logBalanceStatement.execute()
-        } catch(_: SQLIntegrityConstraintViolationException) {
-            false
-        }
+    fun getPlayer(nickname: String, uuid: String?=null): DbPlayer {
+        return DbPlayer(this, nickname, uuid) //todo: fetch player
     }
-    fun updateBalance(change: BalanceChange, nickname: String, currency: String, amount: Int, uuid: String?=null): Boolean {
-        val balanceChange = when (change) {
-            BalanceChange.INC -> "balance + ?"
-            BalanceChange.DEC -> "balance - ?"
-            BalanceChange.SET -> "?"
+    fun getBalances(currencyName: String, orderColumn: Column, orderBy: OrderBy, limit: Int): Array<PlayerBalance> {
+        val balances = mutableListOf<PlayerBalance>()
+        currencies[currencyName]?.let { currency ->
+            val blacklist = currency.blacklist.map { it }
+            val placeholders = blacklist.joinToString(",") { "?" }
+            val statement = connection.prepareStatement(
+                """ SELECT *
+                    FROM balances 
+                    WHERE currency = ? AND (nickname NOT IN ($placeholders) AND (uuid NOT IN ($placeholders) OR uuid IS NULL))
+                    ORDER BY ${orderColumn.toString().lowercase()} $orderBy
+                    LIMIT ?
+                """.trimIndent()
+            )
+            statement.setString(1, currencyName)
+            blacklist.forEachIndexed { index, value ->
+                statement.setString(index + 2, value) // +2 because we have currency at position 1
+            }
+            val uuidIndexStart = blacklist.size + 2
+            blacklist.forEachIndexed { index, value ->
+                statement.setString(uuidIndexStart + index, value)
+            }
+            statement.setInt(blacklist.size * 2 + 2, limit)
+            val resultSet: ResultSet? = statement.executeQuery()
+            while (resultSet?.next() == true) {
+                balances.add(PlayerBalance(
+                    resultSet.getString("nickname"),
+                    resultSet.getString("uuid"),
+                    currencyName,
+                    resultSet.getString("balance").toInt(),
+                ))
+            }
         }
-        val sql = """
-           UPDATE balances
-           SET balance = $balanceChange, currency = ?
-           WHERE (uuid = ? AND uuid IS NOT NULL) OR (nickname = ?)
-        """.trimIndent()
-        val statement = connection.prepareStatement(sql)
-        statement.setInt(1, amount)
-        statement.setString(2, currency)
-        statement.setString(3, uuid)
-        statement.setString(4, nickname)
-
-        logBalanceStatement.setInt(4, amount)
-        logBalanceStatement.setString(3, change.toString())
-        logBalanceStatement.setString(1, nickname)
-        logBalanceStatement.setString(2, uuid)
-        logBalanceStatement.setString(5, currency)
-        return if (!statement.execute()) {
-            initBalance(nickname, currency, 0, uuid)
-        } else {
-            logBalanceStatement.execute()
-            true
-        }
+        return balances.toTypedArray()
     }
-    fun getBalance(nickname: String, currency: String, uuid: String?=null): Int {
-        val sql = """
-            SELECT balance 
-            FROM balances 
-            WHERE (uuid = ? AND uuid IS NOT NULL) OR (nickname = ?) AND currency = ?
-        """.trimIndent()
-        val statement = connection.prepareStatement(sql)
-        statement.setString(1, uuid)
-        statement.setString(2, nickname)
-        statement.setString(3, currency)
-        val resultSet: ResultSet? = statement.executeQuery()
-        return if (resultSet?.next() == true) {
-            resultSet.getInt("balance")
-        } else {
-            0
-        }
-    }
-
 }
 enum class BalanceChange {
     INC,
     DEC,
     SET
 }
+enum class OrderBy {
+    ASC,
+    DESC,
+}
+enum class Column {
+    Balance,
+    Currency,
+    Uuid,
+    Nickname
+}
+class PlayerBalance(
+    val nickname: String,
+    val uuid: String?,
+    val currency: String,
+    val balance: Int,
+)

@@ -13,6 +13,7 @@ import org.bukkit.persistence.PersistentDataType
 
 class Currency(private val currencyName: String) {
     val startBalance: Int
+    val blacklist: Array<String>
     val items: HashMap<String, CurrencyItem> = hashMapOf()
     val placeholderMap = mutableMapOf<String, String>()
     companion object {
@@ -22,6 +23,7 @@ class Currency(private val currencyName: String) {
         cfg.getSection("currency.$currencyName")!!.let { currency ->
             placeholderMap["SYMBOL"] = currency.getString("symbol")
             startBalance = currency.getInt("balance.start")
+            blacklist = currency.getList("blacklist").unwrapped().map { it.toString() }.toTypedArray()
             currency.getConfig("items")?.let {
                 itemsConfig ->
                  itemsConfig.root().entries.forEach { (itemName, _) ->

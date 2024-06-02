@@ -11,7 +11,9 @@ class PlayerJoin: Listener {
     fun onJoin(e: PlayerJoinEvent) {
         val p = e.player
         currencies.forEach { (currencyName, currency) ->
-            database.initBalance(p.name, currencyName, currency.startBalance)
+            database.getPlayer(p.name, p.uniqueId.toString()).initBalance(
+                currencyName, currency.startBalance
+            )
         }
     }
 }
