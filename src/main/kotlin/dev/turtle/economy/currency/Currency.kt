@@ -11,8 +11,9 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class Currency(private val currencyName: String) {
+class Currency(val name: String) {
     val startBalance: Int
+    val symbol: String
     val blacklist: Array<String>
     val items: HashMap<String, CurrencyItem> = hashMapOf()
     val placeholderMap = mutableMapOf<String, String>()
@@ -20,8 +21,9 @@ class Currency(private val currencyName: String) {
         val nskCurrencyItem = NamespacedKey(turtle, "CurrencyItem")
     }
     init {
-        cfg.getSection("currency.$currencyName")!!.let { currency ->
-            placeholderMap["SYMBOL"] = currency.getString("symbol")
+        cfg.getSection("currency.$name")!!.let { currency ->
+            symbol = currency.getString("symbol")
+            placeholderMap["SYMBOL"] = symbol
             startBalance = currency.getInt("balance.start")
             blacklist = currency.getList("blacklist").unwrapped().map { it.toString() }.toTypedArray()
             currency.getConfig("items")?.let {
@@ -35,7 +37,7 @@ class Currency(private val currencyName: String) {
             }
         }
         turtle.messageFactory.newMessage(
-            "&7Loaded &e${items.size}&7 items for currency &e$currencyName&7."
+            "&7Loaded &e${items.size}&7 items for currency &e$name&7."
         ).enablePrefix().send()
     }
     fun getCurrencyItem(itemName: String): CurrencyItem? { return items[itemName.uppercase()] }

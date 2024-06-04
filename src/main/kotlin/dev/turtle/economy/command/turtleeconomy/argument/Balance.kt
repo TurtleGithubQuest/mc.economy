@@ -23,6 +23,5 @@ class Balance(turtleCommand: TurtleCommand): TurtleSubCommand("balance", turtleC
         return true
     }
 
-    override fun onSuggestion(argumentData: ArgumentData) {
-    }
+    override fun onSuggestion(argumentData: ArgumentData) {}
 }

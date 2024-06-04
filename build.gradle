@@ -6,6 +6,7 @@ plugins {
 
 group = 'dev.turtle'
 version = '0.0.5'
+tLibVersion = '0.0.4c'
 pluginName = "TurtleEconomy"
 
 repositories {
@@ -25,9 +26,10 @@ repositories {
 }
 
 dependencies {
-    def tLibDir = findProperty("tLibDir")?: files("S:\\mc_server\\plugins\\TurtleLib-${version}-fat.jar")
+    def tLibVer = findProperty("tLibVer") ?: "${tLibVersion}"
+    def tLibDir = findProperty("tLibDir")?: files("S:\\mc_server\\plugins\\TurtleLib-$tLibVer-fat.jar")
     def tLibIsLocal = findProperty("tLibLocal") ?: false
-    def tLibLocation = tLibIsLocal ? tLibDir : "com.github.TurtleGithubQuest:mc.turtlelib:0.0.4"
+    def tLibLocation = tLibIsLocal ? tLibDir : "com.github.TurtleGithubQuest:mc.turtlelib:$tLibVer"
     if (project.findProperty("fat") ?: false) {
        implementation tLibLocation
     } else {

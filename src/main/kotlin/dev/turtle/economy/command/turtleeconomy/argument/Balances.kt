@@ -10,18 +10,18 @@ import dev.turtle.turtlelib.TurtleSubCommand
 class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtleCommand) {
     init {
         ArgumentData("currency", currencies.keys.toList(), String::class, isRequired = false)
-        ArgumentData("orderColumn", Column.entries, String::class, isRequired = false)
-        ArgumentData("orderBy", OrderBy.entries, String::class, isRequired = false)
+        ArgumentData("orderColumn", Column.entries, String::class, defaultValue = Column.Balance, isRequired = false)
+        ArgumentData("orderBy", OrderBy.entries, String::class, defaultValue = OrderBy.DESC ,isRequired = false)
         ArgumentData("limit", listOf(5, 10, 15, 25), Int::class, isRequired = false)
     }
     override fun onCommand(): Boolean {
-        val currencyName = getValue("currency", defaultValue=currencies[currencies.keys.first()])?.toString()?: return true
+        val currencyName = getValue("currency", defaultValue=currencies[currencies.keys.first()]?.name)?.toString()?: return true
         currencies[currencyName]?: run {
-            turtle.messageFactory.newMessage("command.turtleeconomy.balance.currency-not-found").placeholder("currency", currencyName).fromConfig().send(cs!!)
+            turtle.messageFactory.newMessage("command.turtleeconomy.currency-not-found").placeholder("currency", currencyName).fromConfig().send(cs!!)
             return true
         }
-        val orderBy = getValue("orderBy", defaultValue="ASC")?.let {
-            try { OrderBy.valueOf(it.toString().uppercase()) } catch (_: IllegalArgumentException) { OrderBy.ASC }
+        val orderBy = getValue("orderBy", defaultValue="DESC")?.let {
+            try { OrderBy.valueOf(it.toString().uppercase()) } catch (_: IllegalArgumentException) { OrderBy.DESC }
         }?: return true
         val orderColumn = getValue("orderColumn", defaultValue=Column.Balance)?.let {
             try { Column.valueOf(it.toString()) } catch (_: IllegalArgumentException) { Column.Balance }
@@ -30,16 +30,18 @@ class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtl
             ?.toString()?.toInt()?.coerceAtMost(50)
             ?: return true
         val balances = database.getBalances(currencyName, orderColumn, orderBy, limit)
-        turtle.messageFactory.newMessage("command.turtleeconomy.balance.balances-top").placeholders(hashMapOf("CURRENCY" to currencyName)).fromConfig().send(cs!!)
+        turtle.messageFactory.newMessage("command.turtleeconomy.balances.balances-top").placeholders(hashMapOf("CURRENCY" to currencyName)).fromConfig().send(cs!!)
         balances.forEach {
-            turtle.messageFactory.newMessage("command.turtleeconomy.balance.balances-entry").placeholders(
+            turtle.messageFactory.newMessage("command.turtleeconomy.balances.balances-entry").placeholders(
                 hashMapOf(
                     "PLAYER" to it.nickname,
                     "BALANCE" to it.balance.toString()
                 )
             ).fromConfig().send(cs!!)
         }
-        turtle.messageFactory.newMessage("command.turtleeconomy.balance.balances-bottom").placeholders(hashMapOf("CURRENCY" to currencyName)).fromConfig().send(cs!!)
+        turtle.messageFactory.newMessage("command.turtleeconomy.balances.balances-bottom")
+            .placeholders(hashMapOf("CURRENCY" to currencyName))
+            .fromConfig().send(cs!!)
         return true
     }
 

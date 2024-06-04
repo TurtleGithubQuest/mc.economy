@@ -22,19 +22,20 @@ class Give(turtleCommand: TurtleCommand): TurtleSubCommand("give", turtleCommand
             "CURRENCY" to currencyName,
             "AMOUNT" to amount
         )
-        currencies[currencyName]?.getCurrencyItem(itemName)?.let {
-            if (target !is Player)
-                turtle.messageFactory.newMessage("command.turtleeconomy.give.invalid-target").fromConfig().send(cs!!)
-            else {
-                turtle.messageFactory.newMessage("command.turtleeconomy.give.success")
-                    .placeholders(placeholders).placeholder("target", target.name).fromConfig()
-                    .send(cs!!)
-                it.amount(amount)
-                target.inventory.addItem(it.getItemStack())
-            }
-        }?: turtle.messageFactory.newMessage("command.turtleeconomy.give.item-not-found")
-            .placeholder("item_name", itemName)
-            .fromConfig().send(cs!!)
+        currencies[currencyName]?.getCurrencyItem(itemName)
+            ?.let {
+                if (target !is Player)
+                    turtle.messageFactory.newMessage("command.turtleeconomy.give.invalid-target").fromConfig().send(cs!!)
+                else {
+                    turtle.messageFactory.newMessage("command.turtleeconomy.give.success")
+                        .placeholders(placeholders).placeholder("target", target.name).fromConfig()
+                        .send(cs!!)
+                    it.amount(amount)
+                    target.inventory.addItem(it.getItemStack())
+                }
+            } ?: turtle.messageFactory.newMessage("command.turtleeconomy.give.item-not-found")
+                    .placeholder("item_name", itemName)
+                    .fromConfig().send(cs!!)
         return true
     }
     override fun onSuggestion(argumentData: ArgumentData) {

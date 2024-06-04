@@ -21,7 +21,9 @@ class Economy: TurtlePlugin() {
     }
     override fun onStart() {
         turtle = this
-        messageFactory.setPrefix("&8&l[&2Turtle&9Economy&8&l]&7 ")
+        messageFactory
+            .setPrefix("&8&l[&2Turtle&9Economy&8&l]&7 ")
+            .enableAlignment()
         lang = ConfigLang()
         cfg = ConfigConfig()
         configFactory.reload()

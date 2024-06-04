@@ -9,12 +9,12 @@ class Help(private val turtleCommand: TurtleCommand): TurtleSubCommand("help", t
     var helpPage: List<MessageFactory.StylizedMessage>
     init {
         ArgumentData("subCommandName", turtleCommand.subCommands.keys.toList(), String::class, isRequired = false)
-        helpPage = listOf(turtle.messageFactory.newMessage("").enablePrefix()) + turtleCommand.subCommands.map { (subCommandName, subCommand) ->
+        helpPage = listOf(turtle.messageFactory.newMessage("CENTER("+turtle.messageFactory.getPrefix()+")")) + turtleCommand.subCommands.map { (subCommandName, subCommand) ->
             helpPlaceholders[subCommandName.uppercase()] =
                 hashMapOf(
                     "ARGUMENTS" to subCommand.argumentUsage,
                     "SUBCOMMAND" to subCommand.subCommandName,
-                    "COMMAND" to turtleCommand.commandName,
+                    "COMMAND" to commandName
                 )
             turtle.messageFactory.newMessage("command.${turtleCommand.commandName}.$subCommandName.help-text")
                 .fromConfig().placeholders(helpPlaceholders[subCommandName.uppercase()]!!)
@@ -23,11 +23,11 @@ class Help(private val turtleCommand: TurtleCommand): TurtleSubCommand("help", t
 
     override fun onCommand(): Boolean {
         val subCommandName = getValue("subCommandName")?.toString() ?: run {
-            helpPage.forEach { it.send(cs!!) }
+            helpPage.forEach { it.placeholder("COMMAND", label?:commandName).send(cs!!) }
             return true
         }
         turtleCommand.subCommands[subCommandName]?: run {
-            turtle.messageFactory.newMessage("command.${turtleCommand.commandName}.subcommand-not-found").placeholder("subcommand", subCommandName).send(cs!!)
+            turtle.messageFactory.newMessage("command.${turtleCommand.commandName}.subcommand-not-found").placeholder("subcommand", subCommandName).fromConfig().send(cs!!)
             return true
         }
         turtle.messageFactory.newMessage("command.${turtleCommand.commandName}.$subCommandName.help-text")

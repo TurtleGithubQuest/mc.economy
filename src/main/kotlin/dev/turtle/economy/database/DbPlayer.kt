@@ -45,7 +45,7 @@ class DbPlayer(val db: TEcoDatabase, val nickname: String, val uuid: String?=nul
         statement.setString(2, nickname)
         statement.setString(3, currency)
         val resultSet: ResultSet? = statement.executeQuery()
-        return if (resultSet?.next() == true) {
+        return if (resultSet?.next()!!) {
             resultSet.getInt("balance")
         } else {
             0

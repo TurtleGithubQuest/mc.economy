@@ -1,10 +1,7 @@
 package dev.turtle.economy.command.turtleeconomy
 
 import dev.turtle.economy.Economy.Companion.turtle
-import dev.turtle.economy.command.turtleeconomy.argument.Balance
-import dev.turtle.economy.command.turtleeconomy.argument.Balances
-import dev.turtle.economy.command.turtleeconomy.argument.Give
-import dev.turtle.economy.command.turtleeconomy.argument.Help
+import dev.turtle.economy.command.turtleeconomy.argument.*
 import dev.turtle.turtlelib.TurtleCommand
 
 import org.bukkit.command.Command
@@ -15,6 +12,8 @@ class TurtleEconomy: TurtleCommand("turtleeconomy", turtle) {
         Give(this)
         Balance(this)
         Balances(this)
+        Wealth(this)
+        // Help must be last, all subcommands have to load first.
         Help(this)
     }
     override fun onCommand(cs: CommandSender, cmd: Command, label: String, args: Array<out String>): Boolean {
