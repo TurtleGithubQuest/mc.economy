@@ -14,9 +14,9 @@ class Balance(turtleCommand: TurtleCommand): TurtleSubCommand("balance", turtleC
     }
     override fun onCommand(): Boolean {
         val target = getValue("player", defaultValue=cs!!.name)?.let { it as CommandSender }?: return true
-        val currency = getValue("currency", defaultValue=currencies[currencies.keys.first()])?.toString() ?: return true
+        val currency = getValue("currency")?.let { currencies[it]?:return true } ?: return true
         val player = database.getPlayer(target.name)
-        val balance = player.getBalance(currency)
+        val balance = currency.getAmountForHuman(player.getBalance(currency.name))
         turtle.messageFactory.newMessage("command.turtleeconomy.balance.targets-balance").placeholders(
             hashMapOf("TARGET" to target.name, "BALANCE" to balance)
         ).fromConfig().send(cs!!)

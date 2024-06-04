@@ -8,9 +8,12 @@ CREATE TABLE IF NOT EXISTS balances (
 );
 CREATE TABLE IF NOT EXISTS balance_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    time BIGINT,
     nickname VARCHAR(255),
     uuid VARCHAR(255),
     type VARCHAR(64), # SET, INC, DEC
     amount INT,
-    currency VARCHAR(255)
+    currency VARCHAR(255),
+    admin VARCHAR(255),
+    via VARCHAR(255)
 );

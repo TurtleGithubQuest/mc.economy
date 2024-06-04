@@ -30,7 +30,7 @@ class TEcoDatabase(
                 INSERT INTO balances (nickname, uuid, balance, currency) VALUES (?, ?, ?, ?)
             """.trimIndent())
             logBalanceStatement = connection.prepareStatement("""
-                INSERT INTO balance_logs (nickname, uuid, type, amount, currency) VALUES (?, ?, ?, ?, ?)
+                INSERT INTO balance_logs (time, nickname, uuid, type, amount, currency, admin, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent())
             connection.autoCommit = true
         } catch (e: Exception) {
@@ -66,12 +66,15 @@ class TEcoDatabase(
             }
             statement.setInt(blacklist.size * 2 + 2, limit)
             val resultSet: ResultSet? = statement.executeQuery()
+            val currency = currencies[currencyName]
             while (resultSet?.next() == true) {
                 balances.add(PlayerBalance(
                     resultSet.getString("nickname"),
                     resultSet.getString("uuid"),
                     currencyName,
-                    resultSet.getString("balance").toInt(),
+                    currency
+                        ?.getAmountForHuman(resultSet.getString("balance").toInt())
+                        ?:"0",
                 ))
             }
         }
@@ -93,9 +96,13 @@ enum class Column {
     Uuid,
     Nickname
 }
+enum class Via {
+    CMD,
+    ITEM
+}
 class PlayerBalance(
     val nickname: String,
     val uuid: String?,
     val currency: String,
-    val balance: Int,
+    val balance: String,
 )

@@ -31,7 +31,7 @@ class Give(turtleCommand: TurtleCommand): TurtleSubCommand("give", turtleCommand
                         .placeholders(placeholders).placeholder("target", target.name).fromConfig()
                         .send(cs!!)
                     it.amount(amount)
-                    target.inventory.addItem(it.getItemStack())
+                    target.inventory.addItem(it.getItemStack(cs!!.name))
                 }
             } ?: turtle.messageFactory.newMessage("command.turtleeconomy.give.item-not-found")
                     .placeholder("item_name", itemName)
