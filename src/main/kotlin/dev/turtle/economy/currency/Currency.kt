@@ -15,10 +15,10 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import java.math.BigDecimal
 import kotlin.math.pow
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 class Currency(val name: String) {
-    val startBalance: Int
+    val startBalance: Long
     val symbol: String
     val decimals: Int
     val zeroPow: Double
@@ -37,15 +37,16 @@ class Currency(val name: String) {
             zeroPow = 10.0.pow(decimals)
             minimalValue = BigDecimal.valueOf(1, decimals).toString()
             placeholderMap["SYMBOL"] = symbol
-            startBalance = currency.getInt("balance.start")
+            startBalance = currency.getLong("balance.start")
             blacklist = currency.getList("blacklist").unwrapped().map { it.toString() }.toTypedArray()
             currency.getConfig("items")?.let {
                 itemsConfig ->
                  itemsConfig.root().entries.forEach { (itemName, _) ->
                      val item = itemsConfig.getConfig(itemName)!!
                      items[itemName.uppercase()] = CurrencyItem(itemName)
-                         .displayName(item.getString("displayName"))
                          .material(item.getString("material") ?: "STONE")
+                         .value(item.getNumber("value").toDouble())
+                         .displayName(item.getString("displayName"))
                  }
             }
         }
@@ -53,14 +54,10 @@ class Currency(val name: String) {
             "&7Loaded &e${items.size}&7 items for currency &e$name&7."
         ).enablePrefix().send()
     }
-    fun getCurrencyItem(itemName: String): CurrencyItem? { return items[itemName.uppercase()] }
-    fun getCurrencyItem(itemStack: ItemStack?): CurrencyItem? {
-        return itemStack?.itemMeta?.persistentDataContainer?.get(nskCurrencyItem, PersistentDataType.STRING)?.let {
-            items[it.uppercase()]
-        }
-    }
-    fun getAmountBigInt(amount: Double): Int = this.zeroPow.times(amount).roundToInt()
-    fun getAmountBigInt(amount: String): Int? = amount.toDoubleOrNull()?.let {getAmountBigInt(it)}
+    fun getCurrencyItem(itemName: String): CurrencyItem? = items[itemName.uppercase()]
+    fun getCurrencyItem(itemStack: ItemStack?): CurrencyItem? = itemStack?.itemMeta?.persistentDataContainer?.get(nskCurrencyItem, PersistentDataType.STRING)?.let { items[it.uppercase()] }
+    fun getAmountBigInt(amount: Double): Long = this.zeroPow.times(amount).roundToLong()
+    fun getAmountBigInt(amount: String): Long? = amount.toDoubleOrNull()?.let {getAmountBigInt(it)}
     fun getAmountForHuman(amount: Any): String = amount.toString().toDoubleOrNull()?.div(this.zeroPow).toString()
     fun hasExcessiveDecimals(amount: Double): Boolean = BigDecimal.valueOf(amount).scale() > this.decimals
 
@@ -69,23 +66,16 @@ class Currency(val name: String) {
         private var material: String = "STONE"
         private var amount: Int = 1
         private var value = 1.0
-        fun amount(value: Int): CurrencyItem {
-            this.amount = value; return this
-        }
-        fun value(value: Double): CurrencyItem {
-            this.value = value; return this
-        }
-        fun material(value: String): CurrencyItem {
-            this.material = value; return this
-        }
-        fun displayName(newDisplayName: String?): CurrencyItem {
+        fun amount(value: Int) = apply { this.amount = value }
+        fun value(value: Double) = apply { this.value = value }
+        fun material(value: String) = apply { this.material = value }
+        fun displayName(newDisplayName: String?) = apply {
             this.displayName = newDisplayName?.let {
                 turtle.messageFactory.newMessage(it)
-                    .placeholder("value", value.toString())
+                    .placeholder("VALUE", value.toString())
                     .placeholders(HashMap(placeholderMap))
                     .text()
             }
-            return this
         }
         fun getItemStack(createdBy: String = "SERVER"): ItemStack {
             val itemStack = ItemStack(Material.matchMaterial(material)?: Material.STONE)
@@ -99,9 +89,28 @@ class Currency(val name: String) {
             itemStack.amount = this.amount
             return itemStack
         }
+        fun ItemStack.updateItemStack() = apply {
+            this.itemMeta?.let { itemMeta ->
+                val data = itemMeta.persistentDataContainer
+                if (data.get(nskCurrencyItem, PersistentDataType.STRING) == itemName) {
+                    itemMeta.setDisplayName(displayName)
+                    this.itemMeta = itemMeta
+                }
+            }
+        }
         fun onInteract(e: PlayerInteractEvent) {
             when (e.action) {
                 Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
+                    if (e.item?.itemMeta?.displayName != displayName) {
+                        e.isCancelled = true
+                        e.item?.updateItemStack()
+                        turtle.messageFactory.newMessage("action.currency-item-claim.updated")
+                            .placeholder("item_name", displayName ?: material)
+                            .placeholders(HashMap(placeholderMap))
+                            .fromConfig()
+                            .send(e.player)
+                        return
+                    }
                     if (database.getPlayer(e.player.name).updateBalance(BalanceChange.INC, name, getAmountBigInt(value),
                             (e.item?.itemMeta?.persistentDataContainer?.get(nskCurrencyItemCreatedBy, PersistentDataType.STRING))?:"SERVER", Via.ITEM)) {
                         turtle.messageFactory.newMessage("action.currency-item-claim.success")
@@ -123,7 +132,7 @@ class Currency(val name: String) {
             }
         }
     }
-    inner class CurrencyItemListener(): Listener {
+    inner class CurrencyItemListener: Listener {
         @EventHandler
         fun onInteraction(e: PlayerInteractEvent) {
             getCurrencyItem(e.item)?.onInteract(e)

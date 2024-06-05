@@ -2,7 +2,7 @@ package dev.turtle.economy.command.turtleeconomy.argument
 
 import dev.turtle.economy.Economy.Companion.currencies
 import dev.turtle.economy.Economy.Companion.database
-import dev.turtle.economy.database.Column
+import dev.turtle.economy.database.BalancesColumn
 import dev.turtle.economy.database.OrderBy
 import dev.turtle.turtlelib.TurtleCommand
 import dev.turtle.turtlelib.TurtleSubCommand
@@ -10,7 +10,7 @@ import dev.turtle.turtlelib.TurtleSubCommand
 class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtleCommand) {
     init {
         ArgumentData("currency", currencies.keys.toList(), String::class, isRequired = false)
-        ArgumentData("orderColumn", Column.entries, String::class, defaultValue = Column.Balance, isRequired = false)
+        ArgumentData("orderColumn", BalancesColumn.entries, String::class, defaultValue = BalancesColumn.Balance, isRequired = false)
         ArgumentData("orderBy", OrderBy.entries, String::class, defaultValue = OrderBy.DESC ,isRequired = false)
         ArgumentData("limit", listOf(5, 10, 15, 25), Int::class, isRequired = false)
     }
@@ -23,8 +23,8 @@ class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtl
         val orderBy = getValue("orderBy", defaultValue="DESC")?.let {
             try { OrderBy.valueOf(it.toString().uppercase()) } catch (_: IllegalArgumentException) { OrderBy.DESC }
         }?: return true
-        val orderColumn = getValue("orderColumn", defaultValue=Column.Balance)?.let {
-            try { Column.valueOf(it.toString()) } catch (_: IllegalArgumentException) { Column.Balance }
+        val orderColumn = getValue("orderColumn", defaultValue=BalancesColumn.Balance)?.let {
+            try { BalancesColumn.valueOf(it.toString()) } catch (_: IllegalArgumentException) { BalancesColumn.Balance }
         }?: return true
         val limit = getValue("limit", defaultValue=15)
             ?.toString()?.toInt()?.coerceAtMost(50)
@@ -45,6 +45,5 @@ class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtl
         return true
     }
 
-    override fun onSuggestion(argumentData: ArgumentData) {
-    }
+    override fun onSuggestion(argumentData: ArgumentData) {}
 }

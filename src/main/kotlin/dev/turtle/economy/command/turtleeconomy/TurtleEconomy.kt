@@ -13,6 +13,9 @@ class TurtleEconomy: TurtleCommand("turtleeconomy", turtle) {
         Balance(this)
         Balances(this)
         Wealth(this)
+        Transfer(this)
+        Reload(this)
+        Logs(this)
         // Help must be last, all subcommands have to load first.
         Help(this)
     }

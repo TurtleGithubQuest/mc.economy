@@ -8,6 +8,7 @@ import dev.turtle.economy.event.player.join.PlayerJoin
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
 import org.bukkit.Bukkit
+import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 
 class Economy: TurtlePlugin() {
@@ -24,9 +25,12 @@ class Economy: TurtlePlugin() {
         messageFactory
             .setPrefix("&8&l[&2Turtle&9Economy&8&l]&7 ")
             .enableAlignment()
+        currencies.clear()
+        eventListeners.clear()
         lang = ConfigLang()
         cfg = ConfigConfig()
         configFactory.reload()
+        HandlerList.unregisterAll(this)
         eventListeners.forEach { Bukkit.getPluginManager().registerEvents(it, this)}
         getCommand("turtleeconomy")!!.setExecutor(TurtleEconomy())
         messageFactory

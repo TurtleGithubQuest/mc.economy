@@ -3,6 +3,7 @@ package dev.turtle.economy.database
 import dev.turtle.economy.Economy.Companion.currencies
 import dev.turtle.economy.Economy.Companion.turtle
 import dev.turtle.turtlelib.database.mysql.MySql
+import dev.turtle.turtlelib.util.MessageFactory
 import java.sql.ResultSet
 
 class TEcoDatabase(
@@ -30,7 +31,7 @@ class TEcoDatabase(
                 INSERT INTO balances (nickname, uuid, balance, currency) VALUES (?, ?, ?, ?)
             """.trimIndent())
             logBalanceStatement = connection.prepareStatement("""
-                INSERT INTO balance_logs (time, nickname, uuid, type, amount, currency, admin, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO log_balance (unix, nickname, uuid, type, amount, currency, data, initiator, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent())
             connection.autoCommit = true
         } catch (e: Exception) {
@@ -40,10 +41,38 @@ class TEcoDatabase(
             statement.close()
         }
     }
+    fun getLogs(table: LogsTables, orderColumn: LogsColumn, orderBy: OrderBy, limit: Int): Array<MessageFactory.StylizedMessage> {
+        val logs = mutableListOf<MessageFactory.StylizedMessage>()
+        val statement = connection.prepareStatement(
+                """ SELECT *
+                    FROM log_${table.toString().lowercase()}
+                    ORDER BY ${orderColumn.toString().lowercase()} $orderBy
+                    LIMIT $limit
+                """.trimIndent()
+        )
+        val resultSet: ResultSet? = statement.executeQuery()
+        val metaData = resultSet?.metaData
+        val columnCount = metaData?.columnCount
+        while (resultSet?.next() == true) {
+            val currencyName = resultSet.getString("currency")
+            val currency = currencies[currencyName]
+            val placeholders = currency?.placeholderMap?.toMutableMap<String, Any>()?:HashMap()
+            for (i in 1..columnCount!!) {
+                val columnName = metaData.getColumnName(i).uppercase()
+                var columnValue = resultSet.getObject(i)?:"null"
+                if (columnName == "AMOUNT")
+                    columnValue = currency?.getAmountForHuman(columnValue.toString().toLong())?:columnValue
+                placeholders[columnName] = columnValue
+            }
+            logs.add(turtle.messageFactory.newMessage("command.turtleeconomy.logs.entry.${placeholders["TYPE"]?.toString()?.lowercase() ?:"other"}")
+                .placeholders(HashMap(placeholders)).fromConfig())
+        }
+        return logs.toTypedArray()
+    }
     fun getPlayer(nickname: String, uuid: String?=null): DbPlayer {
         return DbPlayer(this, nickname, uuid) //todo: fetch player
     }
-    fun getBalances(currencyName: String, orderColumn: Column, orderBy: OrderBy, limit: Int): Array<PlayerBalance> {
+    fun getBalances(currencyName: String, orderColumn: BalancesColumn, orderBy: OrderBy, limit: Int): Array<PlayerBalance> {
         val balances = mutableListOf<PlayerBalance>()
         currencies[currencyName]?.let { currency ->
             val blacklist = currency.blacklist.map { it }
@@ -73,7 +102,7 @@ class TEcoDatabase(
                     resultSet.getString("uuid"),
                     currencyName,
                     currency
-                        ?.getAmountForHuman(resultSet.getString("balance").toInt())
+                        ?.getAmountForHuman(resultSet.getString("balance"))
                         ?:"0",
                 ))
             }
@@ -82,19 +111,23 @@ class TEcoDatabase(
     }
 }
 enum class BalanceChange {
-    INC,
-    DEC,
-    SET
+    INC, DEC, SET, INIT, TRANSFER
 }
 enum class OrderBy {
     ASC,
     DESC,
 }
-enum class Column {
+enum class BalancesColumn {
     Balance,
     Currency,
     Uuid,
     Nickname
+}
+enum class LogsColumn {
+    Unix, Nickname, Uuid, Type, Amount, Currency, Data, Initiator, Via
+}
+enum class LogsTables {
+    Balance
 }
 enum class Via {
     CMD,

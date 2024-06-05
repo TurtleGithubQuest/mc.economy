@@ -11,7 +11,7 @@ import org.bukkit.Bukkit
 class Wealth(turtleCommand: TurtleCommand): TurtleSubCommand("wealth", turtleCommand) {
     init {
         ArgumentData("player", null, String::class)
-        ArgumentData("action", BalanceChange.entries, String::class)
+        ArgumentData("action", listOf(BalanceChange.INC, BalanceChange.DEC, BalanceChange.SET), String::class)
         ArgumentData("currency", currencies.keys.toList(), String::class)
         ArgumentData("amount", listOf(100, 1000, 2500, 5000), Number::class, defaultValue = 100, isRequired = false)
     }
@@ -40,13 +40,13 @@ class Wealth(turtleCommand: TurtleCommand): TurtleSubCommand("wealth", turtleCom
                 }
                 amount
             } ?: return true
-            database.getPlayer(targetName, (Bukkit.getPlayer(targetName)?:Bukkit.getOfflinePlayer(targetName)).uniqueId.toString()).updateBalance(balanceChange, currency.name, amount, cs!!.name, Via.CMD)
-            turtle.server.getPlayer(targetName)?.let { target -> turtle.messageFactory.newMessage("command.turtleeconomy.wealth.balance-change.target.${action.lowercase()}").placeholders(HashMap(placeholders)).fromConfig().send(target) }
-            turtle.messageFactory.newMessage("command.turtleeconomy.wealth.balance-change.sender").placeholders(HashMap(placeholders)).fromConfig().send(cs!!)
-
+            if (database.getPlayer(targetName, (Bukkit.getPlayer(targetName)?:Bukkit.getOfflinePlayer(targetName)).uniqueId.toString()).updateBalance(balanceChange, currency.name, amount, cs!!.name, Via.CMD)) {
+                turtle.server.getPlayer(targetName)?.let { target -> turtle.messageFactory.newMessage("command.turtleeconomy.wealth.balance-change.target.${action.lowercase()}").placeholders(HashMap(placeholders)).fromConfig().send(target) }
+                turtle.messageFactory.newMessage("command.turtleeconomy.wealth.balance-change.sender").placeholders(HashMap(placeholders)).fromConfig().send(cs!!)
+            } else turtle.messageFactory.newMessage("command.turtleeconomy.wealth.balance-change.failed").placeholders(HashMap(placeholders)).fromConfig().send(cs!!)
         } catch(_: IllegalArgumentException) {
             turtle.messageFactory.newMessage("command.turtleeconomy.wealth.action-not-found").placeholders(hashMapOf(
-                "ACTIONS" to BalanceChange.entries,
+                "ACTIONS" to "INC, DEC, SET",
                 "ACTION" to action
             )).fromConfig().send(cs!!)
         }

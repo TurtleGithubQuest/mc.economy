@@ -18,23 +18,27 @@ class Give(turtleCommand: TurtleCommand): TurtleSubCommand("give", turtleCommand
         val itemName = getValue("item_name")?.toString() ?: return true
         val amount = getValue("amount")?.let { it as Int } ?: return true
         val placeholders: HashMap<String, Any> = hashMapOf(
+            "TARGET" to target,
             "ITEM_NAME" to itemName,
             "CURRENCY" to currencyName,
-            "AMOUNT" to amount
+            "AMOUNT" to amount,
+            "ITEMS" to currencies[currencyName]?.items?.keys?.joinToString(", ") as Any
         )
         currencies[currencyName]?.getCurrencyItem(itemName)
             ?.let {
                 if (target !is Player)
-                    turtle.messageFactory.newMessage("command.turtleeconomy.give.invalid-target").fromConfig().send(cs!!)
+                    turtle.messageFactory.newMessage("command.turtleeconomy.give.invalid-target")
+                        .placeholders(placeholders)
+                        .fromConfig().send(cs!!)
                 else {
                     turtle.messageFactory.newMessage("command.turtleeconomy.give.success")
-                        .placeholders(placeholders).placeholder("target", target.name).fromConfig()
-                        .send(cs!!)
+                        .placeholders(placeholders).placeholder("target", target.name)
+                        .fromConfig().send(cs!!)
                     it.amount(amount)
                     target.inventory.addItem(it.getItemStack(cs!!.name))
                 }
             } ?: turtle.messageFactory.newMessage("command.turtleeconomy.give.item-not-found")
-                    .placeholder("item_name", itemName)
+                    .placeholders(placeholders)
                     .fromConfig().send(cs!!)
         return true
     }
@@ -42,7 +46,7 @@ class Give(turtleCommand: TurtleCommand): TurtleSubCommand("give", turtleCommand
         when (argumentData.argumentName) {
             "currency" -> {
                 argumentData.getValue(notifyErrors=false)?.let { currencyName ->
-                    super.argumentData["item_name"]?.updateSuggestions(currencies[currencyName]?.items?.keys?.toList())
+                    super.argumentData["item_name"]?.updateSuggestions(currencies[currencyName.toString().uppercase()]?.items?.keys?.toList())
                 }
             }
             else -> {}
