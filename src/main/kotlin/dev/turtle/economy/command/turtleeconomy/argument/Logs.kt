@@ -4,8 +4,8 @@ import dev.turtle.economy.Economy.Companion.database
 import dev.turtle.economy.database.LogsColumn
 import dev.turtle.economy.database.LogsTables
 import dev.turtle.economy.database.OrderBy
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 
 class Logs(turtleCommand: TurtleCommand): TurtleSubCommand("logs", turtleCommand) {
     init { //todo: Add filters

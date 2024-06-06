@@ -13,8 +13,25 @@ class TEcoDatabase(
     sslMode: String
 ): MySql(dbName, ip, port, sslMode, turtle) {
     lateinit var initBalanceStatement: java.sql.PreparedStatement
+    lateinit var incBalanceStatement: java.sql.PreparedStatement
+    lateinit var decBalanceStatement: java.sql.PreparedStatement
+    lateinit var setBalanceStatement: java.sql.PreparedStatement
     lateinit var logBalanceStatement: java.sql.PreparedStatement
     fun migrate() {
+        fun prepareUpdateBalanceStatement(change: BalanceChange): java.sql.PreparedStatement {
+            val balanceChange = when (change) {
+                BalanceChange.INC -> "balance + ?"
+                BalanceChange.DEC -> "balance - ?"
+                BalanceChange.SET -> "?"
+                else -> throw(IllegalArgumentException("Unsupported BalanceChange value: $change."))
+            }
+            return connection.prepareStatement(
+                """UPDATE balances
+                   SET balance = $balanceChange, currency = ?
+                   WHERE (uuid = ? AND uuid IS NOT NULL) OR (nickname = ?)
+                """.trimIndent()
+            )
+        }
         turtle.messageFactory.newMessage("&7Preparing database..").enablePrefix().send()
         connection.autoCommit = false
         val statement = connection.createStatement()
@@ -33,6 +50,10 @@ class TEcoDatabase(
             logBalanceStatement = connection.prepareStatement("""
                 INSERT INTO log_balance (unix, nickname, uuid, type, amount, currency, data, initiator, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent())
+
+            incBalanceStatement = prepareUpdateBalanceStatement(BalanceChange.INC)
+            decBalanceStatement = prepareUpdateBalanceStatement(BalanceChange.DEC)
+            setBalanceStatement = prepareUpdateBalanceStatement(BalanceChange.SET)
             connection.autoCommit = true
         } catch (e: Exception) {
             connection.rollback()

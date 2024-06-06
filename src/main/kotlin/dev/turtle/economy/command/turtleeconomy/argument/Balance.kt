@@ -2,8 +2,8 @@ package dev.turtle.economy.command.turtleeconomy.argument
 
 import dev.turtle.economy.Economy.Companion.currencies
 import dev.turtle.economy.Economy.Companion.database
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -18,7 +18,7 @@ class Balance(turtleCommand: TurtleCommand): TurtleSubCommand("balance", turtleC
         val player = database.getPlayer(target.name)
         val balance = currency.getAmountForHuman(player.getBalance(currency.name))
         turtle.messageFactory.newMessage("command.turtleeconomy.balance.targets-balance").placeholders(
-            hashMapOf("TARGET" to target.name, "BALANCE" to balance)
+            HashMap(hashMapOf("TARGET" to target.name, "BALANCE" to balance)+currency.placeholderMap)
         ).fromConfig().send(cs!!)
         return true
     }

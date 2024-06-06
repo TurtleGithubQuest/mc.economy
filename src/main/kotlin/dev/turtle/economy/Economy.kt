@@ -5,9 +5,11 @@ import dev.turtle.economy.command.turtleeconomy.TurtleEconomy
 import dev.turtle.economy.currency.Currency
 import dev.turtle.economy.database.TEcoDatabase
 import dev.turtle.economy.event.player.join.PlayerJoin
+import dev.turtle.economy.gui.CommandGUI
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
 import org.bukkit.Bukkit
+import org.bukkit.command.CommandExecutor
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 
@@ -48,6 +50,17 @@ class Economy: TurtlePlugin() {
                     "&7Loaded &e${currencies.size}&7 currencies."
                 ).enablePrefix().send()
             }?: this@Economy.disable("&7Plugin &cdisabled&7: No currency configuration found.")
+            this.getSection("gui")?.let {
+                try {
+                    val guiArray = arrayOf(CommandGUI("en_US")) //todo
+                    plugin.messageFactory.newMessage(
+                        "&7Loaded &e${guiArray.size}&7 GUIs: &7${guiArray.joinToString("&8, "){ "${it.name}&7[&8${it.language}&7]" } }&7."
+                    ).enablePrefix().send()
+                } catch (ex: NullPointerException) {
+                    ex.printStackTrace()
+                    this@Economy.disable("&7Plugin &cdisabled&7: Failed to load GUI configuration.")
+                }
+            }?: this@Economy.disable("&7Plugin &cdisabled&7: No GUI configuration found.")
             this.getSection("database")?.let { dbCfg ->
                 try {
                     when (dbCfg.getString("type").lowercase()) {
@@ -55,7 +68,7 @@ class Economy: TurtlePlugin() {
                             database = TEcoDatabase(
                                 dbCfg.getString("name"),
                                 dbCfg.getString("ip"),
-                                this.getStringSafe("database.port"),
+                                this.getStringOrNull("database.port"),
                                 dbCfg.getString("ssl"),
                             )
                         else -> this@Economy.disable("&7Plugin &cdisabled&7: Invalid database type '&e${dbCfg.getString("dbType")}&7'.")

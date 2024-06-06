@@ -1,8 +1,8 @@
 package dev.turtle.economy.command.turtleeconomy.argument
 
 import dev.turtle.economy.Economy.Companion.currencies
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 import org.bukkit.entity.Player
 
 class Give(turtleCommand: TurtleCommand): TurtleSubCommand("give", turtleCommand) {

@@ -6,33 +6,42 @@ import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 
 class DbPlayer(val db: TEcoDatabase, val nickname: String, val uuid: String?=null) {
-    fun updateBalance(change: BalanceChange, currencyName: String, amount: Long, initiator: String, via: Via, logTx: Boolean=true): Boolean {
-        val balanceChange = when (change) {
-            BalanceChange.INC -> "balance + ?"
-            BalanceChange.DEC -> "balance - ?"
-            BalanceChange.SET -> "?"
-            else -> return false
-        }
-        val statement = db.connection.prepareStatement(
-            """UPDATE balances
-               SET balance = $balanceChange, currency = ?
-               WHERE (uuid = ? AND uuid IS NOT NULL) OR (nickname = ?)
-            """.trimIndent()
-        )
-        statement.setLong(1, amount)
-        statement.setString(2, currencyName)
-        statement.setString(3, uuid)
-        statement.setString(4, nickname)
-
-        return try {
-            if (statement.executeUpdate() > 0) {
-                if (logTx) logBalance(change, currencyName, amount, initiator, via)
+    fun updateBalance(change: BalanceChange, currencyName: String, amount: Long, initiator: String, via: Via, logTx: Boolean=true, commit: Boolean=true): Boolean {
+        try {
+            db.connection.autoCommit = false
+            val st = when (change) {
+                BalanceChange.INC -> db.incBalanceStatement
+                BalanceChange.DEC -> db.decBalanceStatement
+                BalanceChange.SET -> db.setBalanceStatement
+                else -> return false
+            }
+            st.setLong(1, amount)
+            st.setString(2, currencyName)
+            st.setString(3, uuid)
+            st.setString(4, nickname)
+            var rowsUpdated = st.executeUpdate()
+            val result = if (rowsUpdated == 0) {
+                //Should be safe to set player balance to intended amount if its positive.
+                val initAmount = if (change != BalanceChange.DEC) amount else currencies[currencyName.uppercase()]?.startBalance ?: 0L
+                val initResult = this@DbPlayer.initBalance(currencyName, initAmount, initiator, via)
+                rowsUpdated = if (initResult) 1 else 0
+                initResult
+            } else if(logTx) logBalance(change, currencyName, amount, initiator, via)
                 else true
-            //Should be safe to set player balance to intended amount if its positive.
-            } else initBalance(currencyName, if (change != BalanceChange.DEC) amount else currencies[currencyName.uppercase()]?.startBalance ?: 0L)
+
+            if (rowsUpdated == 0)
+                throw(java.sql.SQLDataException("Zero rows updated: $nickname $change $amount"))
+            if (!result)
+                throw(java.sql.SQLDataException("Log creation failed: $initiator $change $amount"))
+            if (commit)
+                db.connection.commit()
+            return true
         } catch (ex: SQLException) {
             ex.printStackTrace()
-            false
+            db.connection.rollback()
+            return false
+        } finally {
+            db.connection.autoCommit = commit
         }
     }
     fun transferAmount(to: String, currencyName: String, amount: Long, initiator: String, via: Via): BalanceResult {
@@ -47,11 +56,11 @@ class DbPlayer(val db: TEcoDatabase, val nickname: String, val uuid: String?=nul
             if (senderBalance < amount)
                 return BalanceResult.Error(BalanceError.SENDER_BALANCE_NOT_ENOUGH)
 
-            if (!updateBalance(BalanceChange.DEC, currencyName, amount, initiator, via, logTx=false)) {
+            if (!updateBalance(BalanceChange.DEC, currencyName, amount, initiator, via, logTx=false, commit=false)) {
                 db.connection.rollback()
                 return BalanceResult.Error(BalanceError.SENDER_DEC_FAILED)
             }
-            if (!DbPlayer(db, to).updateBalance(BalanceChange.INC, currencyName, amount, initiator, via, logTx=false)) {
+            if (!DbPlayer(db, to).updateBalance(BalanceChange.INC, currencyName, amount, initiator, via, logTx=false, commit=false)) {
                 db.connection.rollback()
                 return BalanceResult.Error(BalanceError.RECEIVER_INC_FAILED)
             }
@@ -105,7 +114,7 @@ class DbPlayer(val db: TEcoDatabase, val nickname: String, val uuid: String?=nul
             0
         }
     }
-    fun initBalance(currency: String, balance: Long): Boolean {
+    fun initBalance(currency: String, balance: Long, initiator: String="SERVER", via: Via=Via.CMD): Boolean {
         return try {
             val initBalanceStatement = db.initBalanceStatement
             initBalanceStatement.setString(1, nickname)
@@ -114,7 +123,7 @@ class DbPlayer(val db: TEcoDatabase, val nickname: String, val uuid: String?=nul
             initBalanceStatement.setLong(3, balance)
             initBalanceStatement.executeUpdate().let { initRowsUpdated ->
                 if (initRowsUpdated > 0)
-                    return logBalance(BalanceChange.INIT, currency, balance, "SERVER", Via.CMD)
+                    return logBalance(BalanceChange.INIT, currency, balance, initiator, via)
             }
             false
         } catch(_: SQLIntegrityConstraintViolationException) {

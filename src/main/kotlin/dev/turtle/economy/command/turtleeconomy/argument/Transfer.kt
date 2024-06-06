@@ -5,8 +5,8 @@ import dev.turtle.economy.Economy.Companion.database
 import dev.turtle.economy.database.BalanceResult
 import dev.turtle.economy.database.DbPlayer
 import dev.turtle.economy.database.Via
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 import org.bukkit.Bukkit
 
 class Transfer(turtleCommand: TurtleCommand): TurtleSubCommand("transfer", turtleCommand) {

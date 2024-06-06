@@ -4,8 +4,8 @@ import dev.turtle.economy.Economy.Companion.currencies
 import dev.turtle.economy.Economy.Companion.database
 import dev.turtle.economy.database.BalanceChange
 import dev.turtle.economy.database.Via
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 import org.bukkit.Bukkit
 
 class Wealth(turtleCommand: TurtleCommand): TurtleSubCommand("wealth", turtleCommand) {

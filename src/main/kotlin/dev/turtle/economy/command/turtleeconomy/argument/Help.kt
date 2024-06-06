@@ -1,7 +1,7 @@
 package dev.turtle.economy.command.turtleeconomy.argument
 
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 import dev.turtle.turtlelib.util.MessageFactory
 
 class Help(private val turtleCommand: TurtleCommand): TurtleSubCommand("help", turtleCommand) {

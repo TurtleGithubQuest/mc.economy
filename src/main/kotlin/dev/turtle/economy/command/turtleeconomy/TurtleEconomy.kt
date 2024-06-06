@@ -2,7 +2,7 @@ package dev.turtle.economy.command.turtleeconomy
 
 import dev.turtle.economy.Economy.Companion.turtle
 import dev.turtle.economy.command.turtleeconomy.argument.*
-import dev.turtle.turtlelib.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleCommand
 
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
@@ -16,6 +16,7 @@ class TurtleEconomy: TurtleCommand("turtleeconomy", turtle) {
         Transfer(this)
         Reload(this)
         Logs(this)
+        Gui(this)
         // Help must be last, all subcommands have to load first.
         Help(this)
     }

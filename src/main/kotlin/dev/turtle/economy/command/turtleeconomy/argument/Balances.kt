@@ -4,8 +4,8 @@ import dev.turtle.economy.Economy.Companion.currencies
 import dev.turtle.economy.Economy.Companion.database
 import dev.turtle.economy.database.BalancesColumn
 import dev.turtle.economy.database.OrderBy
-import dev.turtle.turtlelib.TurtleCommand
-import dev.turtle.turtlelib.TurtleSubCommand
+import dev.turtle.turtlelib.command.TurtleCommand
+import dev.turtle.turtlelib.command.TurtleSubCommand
 
 class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtleCommand) {
     init {
@@ -16,7 +16,7 @@ class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtl
     }
     override fun onCommand(): Boolean {
         val currencyName = getValue("currency", defaultValue=currencies[currencies.keys.first()]?.name)?.toString()?: return true
-        currencies[currencyName]?: run {
+        val currency = currencies[currencyName]?: run {
             turtle.messageFactory.newMessage("command.turtleeconomy.currency-not-found").placeholder("currency", currencyName).fromConfig().send(cs!!)
             return true
         }
@@ -33,10 +33,10 @@ class Balances(turtleCommand: TurtleCommand): TurtleSubCommand("balances", turtl
         turtle.messageFactory.newMessage("command.turtleeconomy.balances.balances-top").placeholders(hashMapOf("CURRENCY" to currencyName)).fromConfig().send(cs!!)
         balances.forEach {
             turtle.messageFactory.newMessage("command.turtleeconomy.balances.balances-entry").placeholders(
-                hashMapOf(
+                HashMap(hashMapOf(
                     "PLAYER" to it.nickname,
-                    "BALANCE" to it.balance.toString()
-                )
+                    "BALANCE" to it.balance
+                )+currency.placeholderMap)
             ).fromConfig().send(cs!!)
         }
         turtle.messageFactory.newMessage("command.turtleeconomy.balances.balances-bottom")
