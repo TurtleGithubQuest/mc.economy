@@ -10,7 +10,7 @@ class Gui(turtleCommand: TurtleCommand): TurtleSubCommand("gui", turtleCommand) 
 
     override fun onCommand(): Boolean { //todo
         val guiName = getValue("gui")?: return true
-        val gui = turtle.guis["command"]?: return true
+        val gui = turtle.guis[guiName]?: return true
         gui.openFor(cs!!.name)
         return true
     }

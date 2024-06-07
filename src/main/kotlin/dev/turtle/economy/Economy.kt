@@ -19,7 +19,6 @@ class Economy: TurtlePlugin() {
         lateinit var lang: Configuration
         lateinit var database: TEcoDatabase
         val currencies = mutableMapOf<String, Currency>()
-        val eventListeners = mutableListOf<Listener>()
         lateinit var turtle: TurtlePlugin
     }
     override fun onStart() {
@@ -28,12 +27,9 @@ class Economy: TurtlePlugin() {
             .setPrefix("&8&l[&2Turtle&9Economy&8&l]&7 ")
             .enableAlignment()
         currencies.clear()
-        eventListeners.clear()
         lang = ConfigLang()
         cfg = ConfigConfig()
         configFactory.reload()
-        HandlerList.unregisterAll(this)
-        eventListeners.forEach { Bukkit.getPluginManager().registerEvents(it, this)}
         getCommand("turtleeconomy")!!.setExecutor(TurtleEconomy())
         messageFactory
             .newMessage("&7v&b$pluginVersion &2enabled&7.").enablePrefix().send()
@@ -46,15 +42,15 @@ class Economy: TurtlePlugin() {
                     eventListeners.add(currency.CurrencyItemListener())
                     currencies[currencyName.uppercase()] = currency
                 }
-                plugin.messageFactory.newMessage(
+                messageFactory.newMessage(
                     "&7Loaded &e${currencies.size}&7 currencies."
                 ).enablePrefix().send()
             }?: this@Economy.disable("&7Plugin &cdisabled&7: No currency configuration found.")
             this.getSection("gui")?.let {
                 try {
                     val guiArray = arrayOf(CommandGUI("en_US")) //todo
-                    plugin.messageFactory.newMessage(
-                        "&7Loaded &e${guiArray.size}&7 GUIs: &7${guiArray.joinToString("&8, "){ "${it.name}&7[&8${it.language}&7]" } }&7."
+                    messageFactory.newMessage(
+                        "&7Loaded &e${guiArray.size}&7 GUIs: &7${guiArray.joinToString("&8, "){ it.name } }&7."
                     ).enablePrefix().send()
                 } catch (ex: NullPointerException) {
                     ex.printStackTrace()
