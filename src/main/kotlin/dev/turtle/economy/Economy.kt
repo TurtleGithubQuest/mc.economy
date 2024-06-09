@@ -8,10 +8,6 @@ import dev.turtle.economy.event.player.join.PlayerJoin
 import dev.turtle.economy.gui.CommandGUI
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
-import org.bukkit.Bukkit
-import org.bukkit.command.CommandExecutor
-import org.bukkit.event.HandlerList
-import org.bukkit.event.Listener
 
 class Economy: TurtlePlugin() {
     companion object {
@@ -50,7 +46,7 @@ class Economy: TurtlePlugin() {
                 try {
                     val guiArray = arrayOf(CommandGUI("en_US")) //todo
                     messageFactory.newMessage(
-                        "&7Loaded &e${guiArray.size}&7 GUIs: &7${guiArray.joinToString("&8, "){ it.name } }&7."
+                        "&7Loaded &e${guiArray.size}&7 GUI${if (guiArray.size > 1) "s" else ""}: &7${guiArray.joinToString("&8, "){ it.name } }&7."
                     ).enablePrefix().send()
                 } catch (ex: NullPointerException) {
                     ex.printStackTrace()
