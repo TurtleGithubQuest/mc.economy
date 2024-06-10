@@ -5,9 +5,10 @@ import dev.turtle.economy.command.turtleeconomy.TurtleEconomy
 import dev.turtle.economy.currency.Currency
 import dev.turtle.economy.database.TEcoDatabase
 import dev.turtle.economy.event.player.join.PlayerJoin
-import dev.turtle.economy.gui.CommandGUI
+import dev.turtle.economy.gui.DefaultGUI
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
+import dev.turtle.turtlelib.util.configuration.ConfigUtils.getStringOrNull
 
 class Economy: TurtlePlugin() {
     companion object {
@@ -42,11 +43,25 @@ class Economy: TurtlePlugin() {
                     "&7Loaded &e${currencies.size}&7 currencies."
                 ).enablePrefix().send()
             }?: this@Economy.disable("&7Plugin &cdisabled&7: No currency configuration found.")
-            this.getSection("gui")?.let {
+            this.getSection("gui")?.let { guiSection ->
                 try {
-                    val guiArray = arrayOf(CommandGUI("en_US")) //todo
+                    val registeredBehaviorAmount = guiFactory.registerBehaviors(DefaultGUI())
+                    val registeredGuis = guiSection.root().mapNotNull { (guiName, value) ->
+                            try {
+                                guiFactory.run { loadFromConfig(guiName)!!.register() }
+                                guiName
+                                /*if (value is com.typesafe.config.ConfigObject) {
+                                    value.toConfig().getStringOrNull("type").getValue()?.let { type ->
+
+                                    }?:null
+                                } else null*/
+                            } catch (ex: NullPointerException) {
+                                messageFactory.newMessage("&7Failed to load GUI '&e$guiName&7': "+ex.message).send()
+                                null
+                            }
+                    }
                     messageFactory.newMessage(
-                        "&7Loaded &e${guiArray.size}&7 GUI${if (guiArray.size > 1) "s" else ""}: &7${guiArray.joinToString("&8, "){ it.name } }&7."
+                        "&7Loaded &e$registeredBehaviorAmount&7 behavior${if (registeredBehaviorAmount > 1) "s" else ""} and &e${registeredGuis.size}&7 GUI${if (registeredGuis.size > 1) "s" else ""}: &7${registeredGuis.joinToString("&8,&7 ")}&7."
                     ).enablePrefix().send()
                 } catch (ex: NullPointerException) {
                     ex.printStackTrace()

@@ -5,8 +5,8 @@ plugins {
 }
 
 group = 'dev.turtle'
-version = '0.0.5d'
-tLibVersion = 'dev-SNAPSHOT'
+version = '0.0.6'
+tLibVersion = '0.0.7'
 pluginName = "TurtleEconomy"
 
 repositories {
