@@ -5,17 +5,18 @@ import dev.turtle.economy.command.turtleeconomy.TurtleEconomy
 import dev.turtle.economy.currency.Currency
 import dev.turtle.economy.database.TEcoDatabase
 import dev.turtle.economy.event.player.join.PlayerJoin
+import dev.turtle.economy.gui.BalancesGUI
 import dev.turtle.economy.gui.DefaultGUI
 import dev.turtle.turtlelib.TurtlePlugin
 import dev.turtle.turtlelib.util.configuration.Configuration
-import dev.turtle.turtlelib.util.configuration.ConfigUtils.getStringOrNull
+import dev.turtle.turtlelib.util.wrapper.CIMutableMap
 
 class Economy: TurtlePlugin() {
     companion object {
         lateinit var cfg: Configuration
         lateinit var lang: Configuration
         lateinit var database: TEcoDatabase
-        val currencies = mutableMapOf<String, Currency>()
+        val currencies = CIMutableMap<Currency>()
         lateinit var turtle: TurtlePlugin
     }
     override fun onStart() {
@@ -45,16 +46,11 @@ class Economy: TurtlePlugin() {
             }?: this@Economy.disable("&7Plugin &cdisabled&7: No currency configuration found.")
             this.getSection("gui")?.let { guiSection ->
                 try {
-                    val registeredBehaviorAmount = guiFactory.registerBehaviors(DefaultGUI())
-                    val registeredGuis = guiSection.root().mapNotNull { (guiName, value) ->
+                    val registeredBehaviorAmount = guiFactory.registerBehaviors(DefaultGUI(), BalancesGUI())
+                    val registeredGuis = guiSection.root().mapNotNull { (guiName, _) ->
                             try {
                                 guiFactory.run { loadFromConfig(guiName)!!.register() }
                                 guiName
-                                /*if (value is com.typesafe.config.ConfigObject) {
-                                    value.toConfig().getStringOrNull("type").getValue()?.let { type ->
-
-                                    }?:null
-                                } else null*/
                             } catch (ex: NullPointerException) {
                                 messageFactory.newMessage("&7Failed to load GUI '&e$guiName&7': "+ex.message).send()
                                 null

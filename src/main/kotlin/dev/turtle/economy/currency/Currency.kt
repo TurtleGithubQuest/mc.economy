@@ -5,6 +5,7 @@ import dev.turtle.economy.Economy.Companion.database
 import dev.turtle.economy.Economy.Companion.turtle
 import dev.turtle.economy.database.BalanceChange
 import dev.turtle.economy.database.Via
+import dev.turtle.turtlelib.util.wrapper.CIMutableMap
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.event.EventHandler
@@ -25,7 +26,7 @@ class Currency(val name: String) {
     val minimalValue: String
     val blacklist: Array<String>
     val items: HashMap<String, CurrencyItem> = hashMapOf()
-    val placeholderMap = mutableMapOf<String, String>()
+    val placeholderMap = CIMutableMap<Any>()
     companion object {
         val nskCurrencyItem = NamespacedKey(turtle, "CurrencyItem")
         val nskCurrencyItemCreatedBy = NamespacedKey(turtle, "CurrencyItemCreatedBy")

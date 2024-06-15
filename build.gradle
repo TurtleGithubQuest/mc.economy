@@ -6,7 +6,7 @@ plugins {
 
 group = 'dev.turtle'
 version = '0.0.6'
-tLibVersion = '0.0.7'
+tLibVersion = '5301b54596'
 pluginName = "TurtleEconomy"
 
 repositories {
